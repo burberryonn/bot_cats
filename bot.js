@@ -1,15 +1,6 @@
 import "dotenv/config";
 import { Bot, Keyboard } from "grammy";
 import axios from "axios";
-import OpenAI from "openai";
-const openai = new OpenAI({ apiKey: process.env.CHAT_GPT_API_KEY });
-
-const completion = await openai.chat.completions.create({
-  model: "gpt-3.5-turbo",
-  messages: [{ role: "user", content: "write a haiku about ai" }],
-});
-
-console.log(completion);
 
 // Инициализация бота
 const bot = new Bot(process.env.BOT_API_KEY);
@@ -22,8 +13,6 @@ const keyboard = new Keyboard()
   .row()
   .text("Собачки")
   .row()
-  .text("Очистить чат") // Кнопка для очистки чата
-  .row()
   .resized()
   .persistent();
 
@@ -35,6 +24,14 @@ bot.command("start", async (ctx) => {
 
   // Сохраняем ID сообщения, отправленного ботом
   botMessages.push(message.message_id);
+});
+// Команда /restart
+
+bot.command("", async (ctx) => {
+  await ctx.reply("Бот перезапускается...");
+
+  // Завершаем процесс
+  process.exit(0); // Процесс будет завершён, а менеджер перезапустит его
 });
 
 // Функция для получения изображения котика
@@ -76,30 +73,6 @@ async function getDogImage(ctx) {
 }
 
 // Функция для очистки чата (удаляет только сообщения бота)
-async function clearChat(ctx) {
-  const chatId = ctx.chat.id;
-
-  for (const messageId of botMessages) {
-    try {
-      await ctx.api.deleteMessage(chatId, messageId.message_id);
-    } catch (error) {
-      console.error("Не удалось удалить сообщение:", error);
-    }
-  }
-
-  // Очищаем массив после удаления
-  botMessages = [];
-  await ctx.reply("Чат был очищен!");
-}
-
-axios
-  .request(options)
-  .then(function (response) {
-    console.log(response.data);
-  })
-  .catch(function (error) {
-    console.error(error);
-  });
 
 // Обработчики нажатий на кнопки
 bot.hears("Котики", async (ctx) => {
@@ -108,10 +81,6 @@ bot.hears("Котики", async (ctx) => {
 
 bot.hears("Собачки", async (ctx) => {
   await getDogImage(ctx);
-});
-
-bot.hears("Очистить чат", async (ctx) => {
-  await clearChat(ctx);
 });
 
 // Запуск бота
